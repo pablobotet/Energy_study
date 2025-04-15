@@ -304,3 +304,112 @@ print(f"Germany's total emission intensity yearly:\n {germany.calculate_co2_inte
 print(f"PowerCo's emission intensity yearly:\n {powerco.calculate_co2_intensity()}")
 
 df.info()
+
+
+
+# === Calculate CO2 Intensity and Emissions ===
+germany_intensity = germany.calculate_co2_intensity()
+powerco_intensity = powerco.calculate_co2_intensity()
+
+
+# Plot: CO₂ Intensity Comparison
+plt.figure(figsize=(12, 6))
+plt.plot(germany_intensity.index, germany_intensity.values, label="Germany CO₂ Intensity (gCO₂/kWh)", marker='o')
+plt.plot(powerco_intensity.index, powerco_intensity.values, label="PowerCo CO₂ Intensity (gCO₂/kWh)", marker='x')
+plt.xlabel("Year")
+plt.ylabel("CO₂ Intensity (gCO₂/kWh)")
+plt.title("CO₂ Intensity Comparison: Germany vs PowerCo")
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+# Basic Summary
+print("---- Summary ----")
+print(f"Latest Germany CO₂ intensity ({germany_intensity.index[-1]}): {germany_intensity.iloc[-1]:.2f} gCO₂/kWh")
+print(f"Latest PowerCo CO₂ intensity ({powerco_intensity.index[-1]}): {powerco_intensity.iloc[-1]:.2f} gCO₂/kWh")
+
+if powerco_intensity.iloc[-1] < germany_intensity.iloc[-1]:
+    print("✅ PowerCo is cleaner than the national average.")
+else:
+    print("⚠️ PowerCo emits more CO₂ per kWh than the national average.")
+
+# Optional: Plot total emissions
+germany_emission = germany.calculate_co2_emission()
+powerco_emission = powerco.calculate_co2_emissions()
+
+plt.figure(figsize=(12, 6))
+plt.plot(germany_emission.index, germany_emission.values / 1e12, label="Germany CO₂ Emissions (Tons)", marker='o')
+plt.plot(powerco_emission.index, powerco_emission.values / 1e9, label="PowerCo CO₂ Emissions (Thousand Tons)", marker='x')
+plt.xlabel("Year")
+plt.ylabel("CO₂ Emissions")
+plt.title("Total CO₂ Emissions Over Time")
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.show()
+# === Plot CO₂ Intensity ===
+plt.figure(figsize=(12, 6))
+plt.plot(germany_intensity.index, germany_intensity.values, label="Germany CO₂ Intensity", marker='o')
+plt.plot(powerco_intensity.index, powerco_intensity.values, label="PowerCo CO₂ Intensity", marker='x')
+plt.xlabel("Year")
+plt.ylabel("gCO₂ / kWh")
+plt.title("CO₂ Intensity Comparison")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.savefig("germany_top_energy_sources.png", dpi=900, bbox_inches='tight')
+
+plt.show()
+# Compute relative share of each source by year
+distribution = germany.energy_capacity.div(germany.energy_capacity.sum(axis=1), axis=0)
+
+# Plot standard line plot
+plt.figure(figsize=(14, 7))
+for col in distribution.columns:
+    plt.plot(distribution.index, distribution[col], label=col)
+
+plt.title("Germany Energy Capacity Share by Source")
+plt.xlabel("Year")
+plt.ylabel("Share of Capacity")
+plt.ylim(0, 1)
+plt.grid(True)
+plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+plt.tight_layout()
+plt.savefig("Energy_capacity_share.png", dpi=900, bbox_inches='tight')
+
+plt.show()
+
+
+# === Energy Source Distribution (Stacked Area) ===
+distribution = germany.energy_capacity.div(germany.energy_capacity.sum(axis=1), axis=0)
+
+plt.figure(figsize=(14, 7))
+distribution.plot.area(ax=plt.gca(), colormap='tab20',stacked=False)
+plt.title("Germany Energy Capacity Distribution by Source")
+plt.xlabel("Year")
+plt.ylabel("Share of Capacity")
+plt.legend(loc='upper left', bbox_to_anchor=(1.0, 1.0))
+plt.tight_layout()
+plt.grid(True)
+plt.savefig("energy_capacity_dist.png", dpi=900, bbox_inches='tight')
+
+plt.show()
+
+# === Total CO2 Emissions Per Source ===
+# Using: emissions = capacity * installation * CO2_factor * hours
+hours = 8760
+per_source_emission = (germany.energy_capacity * germany.installation * germany.pollution_data * hours * 1e6)
+total_per_source = per_source_emission.sum(axis=0).sort_values(ascending=False)
+
+plt.figure(figsize=(12, 6))
+total_per_source.plot(kind='bar')
+plt.title("Total CO₂ Emissions Per Energy Source in Germany (2010–2029)")
+plt.ylabel("Total CO₂ Emitted (grams)")
+plt.xlabel("Energy Source")
+plt.xticks(rotation=45)
+plt.grid(True)
+plt.tight_layout()
+plt.savefig("emissions_per_source.png", dpi=900, bbox_inches='tight')
+
+plt.show()
